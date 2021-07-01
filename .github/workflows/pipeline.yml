@@ -22,13 +22,6 @@ jobs:
         run: npm run eslint
       - name: build
         run: npm run build
-      - uses: 8398a7/action-slack@v3
-        if: ${{ failure() }}
-        with:
-          status: 'failure'
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-          env:
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: test
         run: npm run test
       - name: e2e tests
@@ -46,13 +39,6 @@ jobs:
           healthcheck: "https://fsopen-pokedex.herokuapp.com/health"
           checkstring: "ok"
           rollbackonhealthcheckfailed: true
-      - uses: 8398a7/action-slack@v3
-        if: ${{ success() }}
-        with:
-          status: 'success'
-          fields: repo,message,commit
-          env:
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - uses: actions/checkout@v2
       - name: Bump version and push tag
         if: ${{ github.event_name == 'push' && !contains(join(github.event.commits.*.message, ' '), '#skip') }}
@@ -60,4 +46,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
 
